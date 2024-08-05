@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #video {
+            display: block;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+        #canvas {
+            display: none;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            margin-top: 20px;
+        }
+        .day {
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            line-height: 40px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        .weekend {
+            background-color: #f0f0f0;
+            color: #888;
+        }
+        .present {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .absent {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .weekoff {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="color: #0056b3;">Slintek</h1>
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw941r_MtcHOwT94lUTu-oiuS1wkqjKCfM2g&s" alt="slintek"><hr><hr>
+        <p id="greeting"></p>
+        <button onclick="punchIn()">Punch In</button>
+        <button onclick="punchOut()">Punch Out</button>
+        <h2>Attendance</h2>
+        <button onclick="viewAttendance()">View Attendance</button>
+        <div id="attendance"></div>
+        <video id="video" autoplay></video>
+        <canvas id="canvas"></canvas>
+    </div>
+    <script>
+        let currentAction = '';
+        let userName = '{{username}}';  // Replace this placeholder with the actual username from the backend
+ 
+        function setGreeting() {
+            const now = new Date();
+            const hours = now.getHours();
+            let greeting = 'Hello';
+            if (hours < 12) {
+                greeting = 'Good morning';
+            } else if (hours < 18) {
+                greeting = 'Good afternoon';
+            } else {
+                greeting = 'Good evening';
+            }
+            document.getElementById('greeting').textContent = `${greeting}, ${userName}!`;
+        }
+ 
+        async function punchIn() {
+            currentAction = 'punch-in';
+            await startCamera();
+        }
+ 
+        async function punchOut() {
+            currentAction = 'punch-out';
+            await startCamera();
+        }
+ 
+        async function startCamera() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+            const container = document.querySelector('.container');
+ 
+            if (video.srcObject) {
+                alert('Camera is already open.');
+                return;
+            }
+ 
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+ 
+                const captureButton = document.createElement('button');
+                captureButton.textContent = 'Capture Selfie';
+                captureButton.onclick = async function() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0);
+                    const photo = canvas.toDataURL('image/png');
+ 
+                    const tracks = video.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+ 
+                    container.removeChild(captureButton);
+ 
+                    const response = await fetch(`/attendance/${currentAction}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ photo })
+                    });
+                    const result = await response.json();
+                    alert(`${currentAction.replace('-', ' ')} at ${result[currentAction.replace('-', '_')]}`);
+                };
+ 
+                container.appendChild(captureButton);
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Failed to access the camera.');
+            }
+        }
+ 
+        async function viewAttendance() {
+            const response = await fetch('/attendance/monthly');
+            const records = await response.json();
+           
+            const calendarDiv = document.getElementById('attendance');
+            calendarDiv.innerHTML = '';
+ 
+            // Create calendar for the current month
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+ 
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+ 
+            const calendar = document.createElement('div');
+            calendar.className = 'calendar';
+ 
+            // Create header for days of the week
+            const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            weekDays.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day';
+                dayElement.textContent = day;
+                calendar.appendChild(dayElement);
+            });
+ 
+            // Fill in days
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'day';
+                calendar.appendChild(emptyCell);
+            }
+ 
+            for (let date = 1; date <= lastDay.getDate(); date++) {
+                const currentDate = new Date(year, month, date);
+                const dayElement = document.createElement('div');
+                dayElement.className = 'day';
+ 
+                if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+                    dayElement.classList.add('weekend');
+                    dayElement.textContent = 'W'; // Mark weekends with "W"
+                } else {
+                    const recordDate = currentDate.toISOString().split('T')[0];
+                    const record = records[recordDate] || {};
+                    const status = record.status;
+ 
+                    // Only show status for today or past dates
+                    if (currentDate > new Date()) {
+                        dayElement.textContent = date;
+                    } else if (status === 'Present') {
+                        dayElement.classList.add('present');
+                        dayElement.textContent = 'P';
+                    } else if (status === 'Absent') {
+                        dayElement.classList.add('absent');
+                        dayElement.textContent = 'A';
+                    } else {
+                        dayElement.textContent = date;
+                    }
+                }
+ 
+                calendar.appendChild(dayElement);
+            }
+ 
+            calendarDiv.appendChild(calendar);
+        }
+ 
+        setGreeting();
+    </script>
+</body>
+</html>

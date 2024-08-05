@@ -3,330 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance App</title>
+    <title>Signup and Login</title>
     <style>
         body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #eee;
-}
-
-.user-info {
-    text-align: center;
-}
-
-#userName {
-    margin: 0;
-    font-size: 24px;
-}
-
-.date-picker {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.nav-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.nav-button:hover {
-    background-color: #0056b3;
-}
-
-.time-log {
-    margin-bottom: 20px;
-}
-
-.time-info, .status {
-    margin-bottom: 10px;
-}
-
-.punch-options {
-    text-align: center;
-}
-
-.punch-option {
-    cursor: pointer;
-}
-
-.punch-option img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-}
-
-.footer {
-    text-align: center;
-    margin-top: 20px;
-}
-
-.footer-button {
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.footer-button:hover {
-    background-color: #0056b3;
-}
-
-.camera-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-}
-
-.camera-modal-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    position: relative;
-}
-
-.camera-modal-content video {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
-}
-
-.camera-modal-content button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background: #007bff;
-    color: #fff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.camera-modal-content button:hover {
-    background: #0056b3;
-}
-
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="user-info">
-                <p id="greeting">Good Morning</p>
-                <h2 id="userName">Vikash</h2>
-            </div>
-        </div>
-        <div class="date-picker">
-            <button class="nav-button" id="prevDay">&#9664;</button>
-            <span id="dateDisplay">Thursday, July 25</span>
-            <button class="nav-button" id="nextDay">&#9654;</button>
-        </div>
-        <div class="time-log">
-            <div class="time-info">
-                <p id="timeIn">Time In: -</p>
-                <p id="timeOut">Time Out: -</p>
-                <p id="timeDiff">In-Hrs: 00:00:00</p>
-            </div>
-            <div class="status">
-                <p id="status">Present &#8635;</p>
-            </div>
-        </div>
-        <div class="punch-options">
-            <div class="punch-option" onclick="openCameraModal()">
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfoJjVY77Y3o44eicABrxOpIyv-Trs3Wz4fQ&s" alt="Selfie Punch">
-                <p>Selfie Punch</p>
-            </div>
-        </div>
-        <div class="footer">
-            <button class="footer-button" onclick="navigate('Attendance')">Attendance</button>
-        </div>
+        <h1>Signup</h1>
+        <form id="signupForm">
+            <input type="text" id="signupUsername" placeholder="Username" required>
+            <input type="password" id="signupPassword" placeholder="Password" required>
+            <button type="submit">Signup</button>
+        </form>
+        <h1>Signin</h1>
+        <form id="signinForm">
+            <input type="text" id="signinUsername" placeholder="Username" required>
+            <input type="password" id="signinPassword" placeholder="Password" required>
+            <button type="submit">Signin</button>
+        </form>
     </div>
- 
-    <!-- Camera Modal -->
-    <div class="camera-modal" id="cameraModal">
-        <div class="camera-modal-content">
-            <video id="video" autoplay></video>
-            <button onclick="captureImage()">Capture</button>
-        </div>
-    </div>
- 
     <script>
-        let isPunchedIn = false;
-        const userId = localStorage.getItem('userId'); // Retrieve user ID from local storage
-
-        document.getElementById('prevDay').addEventListener('click', function () {
-            changeDate(-1);
-        });
-
-        document.getElementById('nextDay').addEventListener('click', function () {
-            changeDate(1);
-        });
-
-        function changeDate(delta) {
-            const dateDisplay = document.getElementById('dateDisplay');
-            const currentDate = new Date(dateDisplay.textContent);
-            currentDate.setDate(currentDate.getDate() + delta);
-            dateDisplay.textContent = currentDate.toDateString();
-            updateLogForDate(currentDate);
-        }
-
-        function navigate(page) {
-            if (page === 'Attendance') {
-                window.location.href = 'attendance.html';
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const response = await fetch('/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ username, password })
+            });
+            if (response.ok) {
+                alert('Signup successful!');
             } else {
-                alert('Navigating to ' + page);
+                alert('Signup failed!');
             }
-        }
-
-        function openCameraModal() {
-            const cameraModal = document.getElementById('cameraModal');
-            cameraModal.style.display = 'flex';
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    const video = document.getElementById('video');
-                    video.srcObject = stream;
-                })
-                .catch(error => {
-                    console.error('Error accessing camera: ', error);
-                });
-        }
-
-        function captureImage() {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            const video = document.getElementById('video');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/png');
-            savePunchTime(imageData);
-            closeCameraModal();
-        }
-
-        function closeCameraModal() {
-            const cameraModal = document.getElementById('cameraModal');
-            cameraModal.style.display = 'none';
-            const video = document.getElementById('video');
-            const stream = video.srcObject;
-            const tracks = stream.getTracks();
-            tracks.forEach(track => track.stop());
-            video.srcObject = null;
-        }
-
-        async function savePunchTime(imageData) {
-            const dateKey = new Date().toISOString().split('T')[0];
-            const timeNow = new Date().toISOString();
-
-            try {
-                const endpoint = isPunchedIn ? '/punch_out' : '/punch_in';
-                const response = await fetch(`http://localhost:8000${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, date: dateKey, time_in: isPunchedIn ? null : timeNow, time_out: isPunchedIn ? timeNow : null })
-                });
-
-                if (response.ok) {
-                    if (isPunchedIn) {
-                        localStorage.setItem(`timeOut-${dateKey}`, timeNow);
-                        localStorage.setItem(`outImage-${dateKey}`, imageData);
-                    } else {
-                        localStorage.setItem(`timeIn-${dateKey}`, timeNow);
-                        localStorage.setItem(`inImage-${dateKey}`, imageData);
-                    }
-                    isPunchedIn = !isPunchedIn;
-                    updateLogForDate(new Date());
-                } else {
-                    console.error('Failed to save punch time:', await response.json());
-                }
-            } catch (e) {
-                console.error('Failed to save punch time:', e);
-            }
-        }
-
-        function calculateTimeDifference(start, end) {
-            const diffMs = end - start;
-            const hours = Math.floor(diffMs / (1000 * 60 * 60));
-            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-
-        window.onload = async function () {
-            const dateDisplay = document.getElementById('dateDisplay');
-            const today = new Date();
-            dateDisplay.textContent = today.toDateString();
-
-            const hours = new Date().getHours();
-            const greeting = hours < 12 ? 'Good Morning' : (hours < 18 ? 'Good Afternoon' : 'Good Evening');
-            document.getElementById('greeting').textContent = greeting;
-
-            const loggedInUser = localStorage.getItem('loggedInUser');
-            if (loggedInUser) {
-                document.getElementById('userName').textContent = loggedInUser;
-                const response = await fetch(`http://localhost:8000/attendance/${userId}?year=${today.getFullYear()}&month=${today.getMonth() + 1}`);
-                const data = await response.json();
-                // Process and update the attendance log
-                updateLogForDate(today);
+        });
+ 
+        document.getElementById('signinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('signinUsername').value;
+            const password = document.getElementById('signinPassword').value;
+            const response = await fetch('/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ username, password })
+            });
+            if (response.ok) {
+                window.location.href = '/dashboard';
             } else {
-                alert('No user logged in. Redirecting to sign-in page.');
-                window.location.href = 'signin.html';
+                alert('Signin failed!');
             }
-        };
-
-        function updateLogForDate(date) {
-            const dateKey = date.toISOString().split('T')[0];
-            const timeIn = localStorage.getItem(`timeIn-${dateKey}`);
-            const timeOut = localStorage.getItem(`timeOut-${dateKey}`);
-            if (timeIn) {
-                document.getElementById('timeIn').textContent = 'Time In: ' + new Date(timeIn).toLocaleTimeString();
-            }
-            if (timeOut) {
-                document.getElementById('timeOut').textContent = 'Time Out: ' + new Date(timeOut).toLocaleTimeString();
-            }
-            if (timeIn && timeOut) {
-                const timeDiff = calculateTimeDifference(new Date(timeIn), new Date(timeOut));
-                document.getElementById('timeDiff').textContent = 'In-Hrs: ' + timeDiff;
-                const status = (new Date(timeOut) - new Date(timeIn)) >= 8 * 60 * 60 * 1000 ? 'Present' : 'Absent';
-                document.getElementById('status').textContent = status;
-                document.getElementById('status').style.color = status === 'Present' ? 'green' : 'red';
-            } else if (timeIn) {
-                document.getElementById('status').textContent = 'Punched In';
-                document.getElementById('status').style.color = 'blue';
-            }
-        }
+        });
     </script>
 </body>
 </html>
