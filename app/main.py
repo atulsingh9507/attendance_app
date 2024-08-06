@@ -151,7 +151,7 @@ async def punch_out(request: Request, db: Session = Depends(get_db)):
         # Calculate the status based on time difference
         if attendance.punch_in and attendance.punch_out:
             diff_in_seconds = (attendance.punch_out - attendance.punch_in).total_seconds()
-            attendance.status = "Present" if diff_in_seconds >= 20  else "Absent"
+            attendance.status = "Present" if diff_in_seconds >= 8 * 3600  else "Absent"
         db.commit()
     return {"punch_out": now.isoformat(), "punch_in": attendance.punch_in.isoformat() if attendance.punch_in else None, "photo": photo}
  
