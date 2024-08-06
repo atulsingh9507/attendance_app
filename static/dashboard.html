@@ -12,9 +12,9 @@
             padding: 0;
         }
         .container {
-            max-width: 500px;
-            margin: 50px auto;
-            padding: 20px;
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 10px;
             background-color: #ffffff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -27,6 +27,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin: 5px;
         }
         button:hover {
             background-color: #0056b3;
@@ -73,8 +74,10 @@
 </head>
 <body>
     <div class="container">
-        <h1 style="color: #0056b3;">Slintek</h1>
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw941r_MtcHOwT94lUTu-oiuS1wkqjKCfM2g&s" alt="slintek"><hr><hr>
+        <h1 style="color: #0056b3;">Slintek Solutions Pvt. Ltd.</h1><br>
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw941r_MtcHOwT94lUTu-oiuS1wkqjKCfM2g&s" alt="Slintek"><hr><hr>
+        <h2 style="color: #721c24;">Attendance App</h2>
+        <hr>
         <p id="greeting"></p>
         <button onclick="punchIn()">Punch In</button>
         <button onclick="punchOut()">Punch Out</button>
@@ -147,7 +150,12 @@
                         body: JSON.stringify({ photo })
                     });
                     const result = await response.json();
-                    alert(`${currentAction.replace('-', ' ')} at ${result[currentAction.replace('-', '_')]}`);
+ 
+                    if (result.message) {
+                        alert(result.message);
+                    } else {
+                        alert(`${currentAction.replace('-', ' ')} at ${result[currentAction.replace('-', '_')]}`);
+                    }
                 };
  
                 container.appendChild(captureButton);
@@ -156,75 +164,84 @@
                 alert('Failed to access the camera.');
             }
         }
- 
         async function viewAttendance() {
-            const response = await fetch('/attendance/monthly');
-            const records = await response.json();
-           
-            const calendarDiv = document.getElementById('attendance');
-            calendarDiv.innerHTML = '';
- 
-            // Create calendar for the current month
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
- 
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
- 
-            const calendar = document.createElement('div');
-            calendar.className = 'calendar';
- 
-            // Create header for days of the week
-            const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            weekDays.forEach(day => {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'day';
-                dayElement.textContent = day;
-                calendar.appendChild(dayElement);
-            });
- 
-            // Fill in days
-            for (let i = 0; i < firstDay.getDay(); i++) {
-                const emptyCell = document.createElement('div');
-                emptyCell.className = 'day';
-                calendar.appendChild(emptyCell);
-            }
- 
-            for (let date = 1; date <= lastDay.getDate(); date++) {
-                const currentDate = new Date(year, month, date);
-                const dayElement = document.createElement('div');
-                dayElement.className = 'day';
- 
-                if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-                    dayElement.classList.add('weekend');
-                    dayElement.textContent = 'W'; // Mark weekends with "W"
-                } else {
-                    const recordDate = currentDate.toISOString().split('T')[0];
-                    const record = records[recordDate] || {};
-                    const status = record.status;
- 
-                    // Only show status for today or past dates
-                    if (currentDate > new Date()) {
-                        dayElement.textContent = date;
-                    } else if (status === 'Present') {
-                        dayElement.classList.add('present');
-                        dayElement.textContent = 'P';
-                    } else if (status === 'Absent') {
-                        dayElement.classList.add('absent');
-                        dayElement.textContent = 'A';
-                    } else {
-                        dayElement.textContent = date;
-                    }
-                }
- 
-                calendar.appendChild(dayElement);
-            }
- 
-            calendarDiv.appendChild(calendar);
+    try {
+        const response = await fetch('/attendance/monthly');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
+        const records = await response.json();
+
+        const calendarDiv = document.getElementById('attendance');
+        calendarDiv.innerHTML = '';
+
+        // Create calendar for the current month
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        const calendar = document.createElement('div');
+        calendar.className = 'calendar';
+
+        // Create header for days of the week
+        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        weekDays.forEach(day => {
+            const dayElement = document.createElement('div');
+            dayElement.className = 'day';
+            dayElement.textContent = day;
+            calendar.appendChild(dayElement);
+        });
+
+        // Fill in days
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'day';
+            calendar.appendChild(emptyCell);
+        }
+
+        for (let date = 1; date <= lastDay.getDate(); date++) {
+            const currentDate = new Date(year, month, date);
+            const dayElement = document.createElement('div');
+            dayElement.className = 'day';
+
+            // Adjust the date to local midnight to avoid timezone issues
+            const localDate = new Date(Date.UTC(year, month, date));
+
+            const recordDate = localDate.toISOString().split('T')[0];
+            const record = records[recordDate] || {};
+            const status = record.status;
+
+            // Display correct status
+            if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+                dayElement.classList.add('weekend');
+                dayElement.textContent = 'W'; // Mark weekends with "W"
+            } else if (status === 'Present') {
+                dayElement.classList.add('present');
+                dayElement.textContent = 'P';
+            } else if (status === 'Absent') {
+                dayElement.classList.add('absent');
+                dayElement.textContent = 'A';
+            } else {
+                dayElement.textContent = date;
+            }
+
+            calendar.appendChild(dayElement);
+        }
+
+        calendarDiv.appendChild(calendar);
+
+    } catch (error) {
+        console.error('Error fetching attendance data:', error);
+    }
+}
+
+ 
  
         setGreeting();
     </script>
 </body>
 </html>
+ 
