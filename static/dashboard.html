@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Dashboard - Attendance App</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,22 +12,35 @@
             padding: 0;
         }
         .container {
-            max-width: 450px;
-            margin: 0 auto;
-            padding: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
             background-color: #ffffff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+        h1, h2 {
+            color: #0056b3;
+        }
+        hr {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        img.logo {
+            width: 100px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
         button {
-            padding: 10px;
+            padding: 10px 20px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             margin: 5px;
+            font-size: 16px;
         }
         button:hover {
             background-color: #0056b3;
@@ -35,11 +48,10 @@
         #video {
             display: block;
             width: 100%;
-            max-width: 600px;
+            max-width: 400px;
             margin: auto;
-        }
-        #canvas {
-            display: none;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
         }
         .calendar {
             display: grid;
@@ -54,6 +66,7 @@
             line-height: 40px;
             border: 1px solid #ddd;
             box-sizing: border-box;
+            font-size: 14px;
         }
         .weekend {
             background-color: #f0f0f0;
@@ -74,10 +87,10 @@
 </head>
 <body>
     <div class="container">
-        <h1 style="color: #0056b3;">Slintek Solutions Pvt. Ltd.</h1><br>
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw941r_MtcHOwT94lUTu-oiuS1wkqjKCfM2g&s" alt="Slintek"><hr><hr>
-        <h2 style="color: #721c24;">Attendance App</h2>
+        <img class="logo" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw941r_MtcHOwT94lUTu-oiuS1wkqjKCfM2g&s" alt="Slintek Logo">
+        <h1>Slintek Solutions Pvt. Ltd.</h1>
         <hr>
+        <h2>Attendance App</h2>
         <p id="greeting"></p>
         <button onclick="punchIn()">Punch In</button>
         <button onclick="punchOut()">Punch Out</button>
@@ -85,12 +98,12 @@
         <button onclick="viewAttendance()">View Attendance</button>
         <div id="attendance"></div>
         <video id="video" autoplay></video>
-        <canvas id="canvas"></canvas>
     </div>
+
     <script>
         let currentAction = '';
         let userName = '{{username}}';  // Replace this placeholder with the actual username from the backend
- 
+
         function setGreeting() {
             const now = new Date();
             const hours = now.getHours();
@@ -104,32 +117,32 @@
             }
             document.getElementById('greeting').textContent = `${greeting}, ${userName}!`;
         }
- 
+
         async function punchIn() {
             currentAction = 'punch-in';
             await startCamera();
         }
- 
+
         async function punchOut() {
             currentAction = 'punch-out';
             await startCamera();
         }
- 
+
         async function startCamera() {
             const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
+            const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             const container = document.querySelector('.container');
- 
+
             if (video.srcObject) {
                 alert('Camera is already open.');
                 return;
             }
- 
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
- 
+
                 const captureButton = document.createElement('button');
                 captureButton.textContent = 'Capture Selfie';
                 captureButton.onclick = async function() {
@@ -137,111 +150,109 @@
                     canvas.height = video.videoHeight;
                     context.drawImage(video, 0, 0);
                     const photo = canvas.toDataURL('image/png');
- 
+
                     const tracks = video.srcObject.getTracks();
                     tracks.forEach(track => track.stop());
                     video.srcObject = null;
- 
+
                     container.removeChild(captureButton);
- 
+
                     const response = await fetch(`/attendance/${currentAction}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ photo })
                     });
                     const result = await response.json();
- 
+
                     if (result.message) {
                         alert(result.message);
                     } else {
                         alert(`${currentAction.replace('-', ' ')} at ${result[currentAction.replace('-', '_')]}`);
                     }
                 };
- 
+
                 container.appendChild(captureButton);
             } catch (error) {
                 console.error('Error accessing camera:', error);
                 alert('Failed to access the camera.');
             }
         }
+
         async function viewAttendance() {
-    try {
-        const response = await fetch('/attendance/monthly');
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const records = await response.json();
+            try {
+                const response = await fetch('/attendance/monthly');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const records = await response.json();
 
-        const calendarDiv = document.getElementById('attendance');
-        calendarDiv.innerHTML = '';
+                const calendarDiv = document.getElementById('attendance');
+                calendarDiv.innerHTML = '';
 
-        // Create calendar for the current month
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
+                // Create calendar for the current month
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
 
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
 
-        const calendar = document.createElement('div');
-        calendar.className = 'calendar';
+                const calendar = document.createElement('div');
+                calendar.className = 'calendar';
 
-        // Create header for days of the week
-        const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        weekDays.forEach(day => {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'day';
-            dayElement.textContent = day;
-            calendar.appendChild(dayElement);
-        });
+                // Create header for days of the week
+                const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                weekDays.forEach(day => {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'day';
+                    dayElement.textContent = day;
+                    calendar.appendChild(dayElement);
+                });
 
-        // Fill in days
-        for (let i = 0; i < firstDay.getDay(); i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'day';
-            calendar.appendChild(emptyCell);
-        }
+                // Fill in days
+                for (let i = 0; i < firstDay.getDay(); i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'day';
+                    calendar.appendChild(emptyCell);
+                }
 
-        for (let date = 1; date <= lastDay.getDate(); date++) {
-            const currentDate = new Date(year, month, date);
-            const dayElement = document.createElement('div');
-            dayElement.className = 'day';
+                for (let date = 1; date <= lastDay.getDate(); date++) {
+                    const currentDate = new Date(year, month, date);
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'day';
 
-            // Adjust the date to local midnight to avoid timezone issues
-            const localDate = new Date(Date.UTC(year, month, date));
+                    // Adjust the date to local midnight to avoid timezone issues
+                    const localDate = new Date(Date.UTC(year, month, date));
 
-            const recordDate = localDate.toISOString().split('T')[0];
-            const record = records[recordDate] || {};
-            const status = record.status;
+                    const recordDate = localDate.toISOString().split('T')[0];
+                    const record = records[recordDate] || {};
+                    const status = record.status;
 
-            // Display correct status
-            if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-                dayElement.classList.add('weekend');
-                dayElement.textContent = 'W'; // Mark weekends with "W"
-            } else if (status === 'Present') {
-                dayElement.classList.add('present');
-                dayElement.textContent = 'P';
-            } else if (status === 'Absent') {
-                dayElement.classList.add('absent');
-                dayElement.textContent = 'A';
-            } else {
-                dayElement.textContent = date;
+                    // Display correct status
+                    if (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+                        dayElement.classList.add('weekend');
+                        dayElement.textContent = 'W'; // Mark weekends with "W"
+                    } else if (status === 'Present') {
+                        dayElement.classList.add('present');
+                        dayElement.textContent = 'P';
+                    } else if (status === 'Absent') {
+                        dayElement.classList.add('absent');
+                        dayElement.textContent = 'A';
+                    } else {
+                        dayElement.textContent = date;
+                    }
+
+                    calendar.appendChild(dayElement);
+                }
+
+                calendarDiv.appendChild(calendar);
+
+            } catch (error) {
+                console.error('Error fetching attendance data:', error);
             }
-
-            calendar.appendChild(dayElement);
         }
 
-        calendarDiv.appendChild(calendar);
-
-    } catch (error) {
-        console.error('Error fetching attendance data:', error);
-    }
-}
-
- 
- 
         setGreeting();
     </script>
 </body>
 </html>
- 
