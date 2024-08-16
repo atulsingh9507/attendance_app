@@ -1,45 +1,17 @@
 from fastapi import FastAPI, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from typing import Optional
 from starlette.middleware.sessions import SessionMiddleware
+from .database import engine, SessionLocal, get_db
+from .models import Base, User, Attendance
 import logging
  
 # Configure logging
 logging.basicConfig(level=logging.INFO)
  
-# Database setup
-DATABASE_URL = "sqlite:///./test.db"
- 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
- 
-# Database models
-class User(Base):
-    __tablename__ = "users"
- 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)  # Should be hashed
- 
-class Attendance(Base):
-    __tablename__ = "attendance"
- 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True)
-    date = Column(String, index=True)
-    punch_in = Column(DateTime, nullable=True)
-    punch_out = Column(DateTime, nullable=True)
-    status = Column(String, nullable=True)
-    punch_in_photo = Column(String, nullable=True)
-    punch_out_photo = Column(String, nullable=True)
- 
+# Create the database tables
 Base.metadata.create_all(bind=engine)
  
 app = FastAPI()
@@ -49,14 +21,6 @@ app.add_middleware(SessionMiddleware, secret_key="your-secret-key")
  
 # Static files route
 app.mount("/static", StaticFiles(directory="static"), name="static")
- 
-# Dependency to get the DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
  
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -95,8 +59,7 @@ async def signup(username: str = Form(...), password: str = Form(...), db: Sessi
     if db_user:
         return {"message": "User already exists"}
  
-    # TODO: Hash the password
-    hashed_password = password
+    hashed_password = password  # TODO: Hash the password
     new_user = User(username=username, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
@@ -119,7 +82,6 @@ async def punch_in(request: Request, db: Session = Depends(get_db)):
     body = await request.json()
     photo = body.get('photo', '')
  
-    # Check if user has already punched in today
     attendance = db.query(Attendance).filter(Attendance.user_id == user_id, Attendance.date == now.date().isoformat()).first()
     if attendance and attendance.punch_in:
         return {"message": "Already punched in today"}
@@ -140,7 +102,6 @@ async def punch_out(request: Request, db: Session = Depends(get_db)):
     body = await request.json()
     photo = body.get('photo', '')
  
-    # Check if user has already punched out today
     attendance = db.query(Attendance).filter(Attendance.user_id == user_id, Attendance.date == now.date().isoformat()).first()
     if attendance and attendance.punch_out:
         return {"message": "Already punched out today"}
@@ -148,7 +109,6 @@ async def punch_out(request: Request, db: Session = Depends(get_db)):
     if attendance:
         attendance.punch_out = now
         attendance.punch_out_photo = photo
-        # Calculate the status based on time difference
         if attendance.punch_in and attendance.punch_out:
             diff_in_seconds = (attendance.punch_out - attendance.punch_in).total_seconds()
             attendance.status = "Present" if diff_in_seconds >= 8 * 3600 else "Absent"
@@ -163,7 +123,6 @@ async def get_monthly_attendance(request: Request, db: Session = Depends(get_db)
     end_date = datetime(now.year, now.month + 1, 1) if now.month < 12 else datetime(now.year + 1, 1, 1)
     records = db.query(Attendance).filter(Attendance.user_id == user_id, Attendance.date >= str(start_date.date()), Attendance.date < str(end_date.date())).all()
  
-    # Get all dates from the current month
     attendance_dict = {}
     for record in records:
         punch_in = record.punch_in.isoformat() if record.punch_in else None
@@ -171,7 +130,6 @@ async def get_monthly_attendance(request: Request, db: Session = Depends(get_db)
         status = record.status
         attendance_dict[record.date] = {"punch_in": punch_in, "punch_out": punch_out, "status": status}
    
-    # Add default status for dates without records (if needed)
     for i in range(1, (end_date - start_date).days + 1):
         date = (start_date + timedelta(days=i-1)).date()
         if date.isoformat() not in attendance_dict:
@@ -186,12 +144,10 @@ async def get_all_users_attendance(db: Session = Depends(get_db)):
     start_date = datetime(now.year, now.month, 1)
     end_date = datetime(now.year, now.month + 1, 1) if now.month < 12 else datetime(now.year + 1, 1, 1)
  
-    # Fetch all attendance records
     records = db.query(Attendance, User).join(User, Attendance.user_id == User.id).filter(
         Attendance.date >= str(start_date.date()), Attendance.date < str(end_date.date())
     ).all()
    
-    # Structure the response
     attendance_dict = {}
     for attendance, user in records:
         date = attendance.date
@@ -206,7 +162,6 @@ async def get_all_users_attendance(db: Session = Depends(get_db)):
             "status": attendance.status
         }
    
-    # Fill in missing dates
     for user_id, data in attendance_dict.items():
         for i in range(1, (end_date - start_date).days + 1):
             date = (start_date + timedelta(days=i-1)).date()
